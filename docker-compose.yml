@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  app: 
+    build:  
+      context: ./php
+    image: app
+    container_name: app
+    volumes:
+      - ./www:/var/www
+    depends_on:
+      - mysql
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: always
+    ports: 
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_USER: giant
+      MYSQL_PASSWORD: 123456
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_DATABASE: test_db
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # 挂载初始化 SQL 文件
+  nginx:
+    depends_on:
+      - "app"
+    restart: always
+    volumes:
+      - "./nginx/nginx.conf:/etc/nginx/nginx.conf"
+      - "./nginx/conf.d:/etc/nginx/conf.d"
+      - "./nginx/log/error.log:/var/log/nginx/error.log"
+    image: nginx:latest
+    container_name: "nginx"
+    ports: 
+       - "80:80"
+  redis:
+    image: redis:latest
+    restart: always
+    container_name: redis
+    ports:
+      - "6379:6379"
+  
+volumes:
+  mysql_data:
